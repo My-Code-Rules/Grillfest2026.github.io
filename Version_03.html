@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bestellsystem Pro</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #ffffff;
+    color: #333;
+}
+
+.header {
+    background: #2b2b2b;
+    color: white;
+    padding: 20px;
+    font-size: 2em;
+    text-align: center;
+    font-weight: bold;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+}
+
+button {
+    font-size: 1.3em;
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+#stationBtn {
+    background: #c62828;
+    color: white;
+}
+
+.active {
+    background: #2e7d32 !important;
+}
+
+.tiles {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px;
+}
+
+.tile {
+    flex: 1;
+    margin: 10px;
+    padding: 50px;
+    background: #c62828;
+    color: white;
+    text-align: center;
+    font-size: 2em;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.products {
+    display: none;
+    padding: 20px;
+}
+
+.product {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    font-size: 1.5em;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.qty-controls button {
+    font-size: 1.5em;
+    margin: 0 10px;
+    background: #2b2b2b;
+    color: white;
+}
+
+.summary {
+    padding: 20px;
+    background: #f9f9f9;
+    margin: 20px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.total {
+    font-size: 2em;
+    text-align: right;
+    margin-top: 10px;
+}
+
+.checkout {
+    margin-top: 20px;
+    width: 100%;
+    background: #2e7d32; /* Grün */
+    color: white;
+    font-size: 1.6em;
+}
+
+.footer {
+    background: #2b2b2b;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">Feuerwehr Walldorf – Bestellsystem</div>
+
+<div class="controls">
+    <button onclick="toggleStationMode()" id="stationBtn">Stationsmodus AUS</button>
+</div>
+
+<div class="tiles">
+    <div class="tile" onclick="showCategory('getraenke')">🍺 Getränke</div>
+    <div class="tile" onclick="showCategory('essen')">🍟 Essen</div>
+    <div class="tile" onclick="showCategory('eis')">🍦 Eis</div>
+</div>
+
+<div id="getraenke" class="products"></div>
+<div id="essen" class="products"></div>
+<div id="eis" class="products"></div>
+
+<div class="summary">
+    <div id="orderList"></div>
+    <div class="total">Summe: <span id="total">0.00</span> €</div>
+    <button class="checkout" onclick="checkout()">Bestellung abschließen</button>
+</div>
+
+<div class="footer">
+    © 2026 Alessandro Di Mari
+</div>
+
+<script>
+
+let total = 0;
+let stationMode = false;
+let activeCategory = null;
+let order = {};
+
+const data = {
+    getraenke: [
+        {name: "Braustüb’l Pils", price: 3},
+        {name: "Braustüb’l Weizen", price: 3},
+        {name: "Cola / Fanta / Cola Zero", price: 2.5},
+	{name: "Apfelsaftschorle / Zitronenlimo", price: 2.5},
+	{name: "Mineralwasser", price: 2},
+	{name: "Apfelwein", price: 2.5},
+	{name: "Apfelwein - 6er Bembel", price: 17},
+	{name: "Weißwein", price: 3.5},
+	{name: "Asbach Hütchen", price: 3.5},
+	{name: "Aperol Spritzz", price: 6.5}
+    ],
+    essen: [
+        {name: "Steak mit Brötchen", price: 5.5},
+        {name: "Spiessbratenbrötchen", price: 5},
+        {name: "Bratwurst mit Brötchen", price: 3.5},
+        {name: "Rindswurst mit Brötchen", price: 3.5},
+	{name: "Bockwurst mit Brötchen", price: 3.5},
+	{name: "Currywurst mit Brötchen", price: 5},
+	{name: "Vegange Wurst mit Brötchen", price: 3.5},
+	{name: "Salat - klein", price: 2},
+	{name: "Salat - groß ", price: 4},
+	{name: "Pommes Frites", price: 3.5},
+	{name: "Torte - Stück", price: 2},
+	{name: "Kuchen - Stück", price: 1.5},
+	{name: "Kaffee - Tasse", price: 1}
+    ],
+    eis: [
+        {name: "Cornetto Eis", price: 2},
+        {name: "Magnum Eis", price: 3},
+        {name: "Capri Eis", price: 1.5},
+	{name: "Mini Milk Eis", price: 1},
+        {name: "Happen Eis", price: 2}
+    ]
+};
+
+function toggleStationMode() {
+    stationMode = !stationMode;
+    const btn = document.getElementById("stationBtn");
+    btn.innerText = stationMode ? "Stationsmodus AN" : "Stationsmodus AUS";
+    btn.classList.toggle("active");
+}
+
+function showCategory(category) {
+    if (stationMode && activeCategory && activeCategory !== category) {
+        alert("Stationsmodus aktiv: Nur eine Kategorie erlaubt!");
+        return;
+    }
+
+    activeCategory = category;
+
+    document.querySelectorAll('.products').forEach(el => el.style.display = 'none');
+
+    const container = document.getElementById(category);
+    container.innerHTML = "";
+    container.style.display = "block";
+
+    data[category].forEach(product => {
+        const div = document.createElement("div");
+        div.className = "product";
+
+        const key = category + "_" + product.name;
+        if (!order[key]) order[key] = { qty: 0, price: product.price, name: product.name };
+
+        div.innerHTML = `
+            <span>${product.name} (${product.price}€)</span>
+            <div class="qty-controls">
+                <button onclick="changeQty('${key}', -1)">-</button>
+                <span id="${key}">${order[key].qty}</span>
+                <button onclick="changeQty('${key}', 1)">+</button>
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+function changeQty(key, change) {
+    let item = order[key];
+
+    item.qty += change;
+    if (item.qty < 0) item.qty = 0;
+
+    document.getElementById(key).innerText = item.qty;
+
+    calculateTotal();
+    renderOrder();
+}
+
+function calculateTotal() {
+    total = 0;
+    Object.values(order).forEach(item => {
+        total += item.qty * item.price;
+    });
+
+    document.getElementById("total").innerText = total.toFixed(2);
+}
+
+function renderOrder() {
+    const list = document.getElementById("orderList");
+    list.innerHTML = "";
+
+    Object.values(order).forEach(item => {
+        if (item.qty > 0) {
+            const div = document.createElement("div");
+            div.innerText = `${item.name} x${item.qty} = ${(item.qty * item.price).toFixed(2)} €`;
+            list.appendChild(div);
+        }
+    });
+}
+
+function checkout() {
+    if (total === 0) {
+        alert("Keine Produkte ausgewählt!");
+        return;
+    }
+
+    alert("Bestellung abgeschlossen!\nGesamt: " + total.toFixed(2) + " €");
+
+    order = {};
+    total = 0;
+    activeCategory = null;
+
+    document.getElementById("total").innerText = "0.00";
+    document.getElementById("orderList").innerHTML = "";
+
+    document.querySelectorAll('.products').forEach(el => el.style.display = 'none');
+}
+
+</script>
+
+</body>
+</html>
