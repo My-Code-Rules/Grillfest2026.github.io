@@ -11,6 +11,7 @@ body {
     margin: 0;
     background: #ffffff;
     color: #333;
+    touch-action: manipulation;
 }
 
 .header {
@@ -43,6 +44,31 @@ button {
 
 .active {
     background: #2e7d32 !important;
+}
+
+@media (max-width: 900px) {
+    .tiles {
+        flex-direction: column;
+    }
+
+    .tile {
+        font-size: 1.5em !important;
+        padding: 30px !important;
+    }
+
+    .product {
+        font-size: 1.2em !important;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .total {
+        font-size: 1.5em !important;
+    }
+
+    .checkout {
+        font-size: 1.3em !important;
+    }
 }
 
 .tiles {
@@ -127,15 +153,16 @@ button {
     <button onclick="toggleStationMode()" id="stationBtn">Stationsmodus AUS</button>
 </div>
 
-<div class="tiles">
+<div class="tiles" id="categoryTiles">
     <div class="tile" onclick="showCategory('getraenke')">🍺 Getränke</div>
-    <div class="tile" onclick="showCategory('essen')">🍟 Essen</div>
-    <div class="tile" onclick="showCategory('eis')">🍦 Eis</div>
+    <div class="tile" onclick="showCategory('essen')">🔥 Grill</div>
+    <div class="tile" onclick="showCategory('salatbar')">🥗 Salatbar</div>
 </div>
 
 <div id="getraenke" class="products"></div>
 <div id="essen" class="products"></div>
-<div id="eis" class="products"></div>
+<div id="salatbar" class="products"></div>
+
 
 <div class="summary">
     <div id="orderList"></div>
@@ -156,46 +183,38 @@ let order = {};
 
 const data = {
     getraenke: [
-        {name: "Braustüb’l Pils", price: 3},
-        {name: "Braustüb’l Weizen", price: 3},
-        {name: "Cola / Fanta / Cola Zero", price: 2.5},
-	{name: "Apfelsaftschorle / Zitronenlimo", price: 2.5},
-	{name: "Mineralwasser", price: 2},
-	{name: "Apfelwein", price: 2.5},
-	{name: "Apfelwein - 6er Bembel", price: 17},
-	{name: "Weißwein", price: 3.5},
-	{name: "Asbach Hütchen", price: 3.5},
-	{name: "Aperol Spritzz", price: 6.5}
+        {name: "Bier", price: 3},
+        {name: "Apfelwein", price: 2.5},
+        {name: "Wasser", price: 2},
+        {name: "Cola", price: 2.5}
     ],
     essen: [
-        {name: "Steak mit Brötchen", price: 5.5},
-        {name: "Spiessbratenbrötchen", price: 5},
-        {name: "Bratwurst mit Brötchen", price: 3.5},
-        {name: "Rindswurst mit Brötchen", price: 3.5},
-	{name: "Bockwurst mit Brötchen", price: 3.5},
-	{name: "Currywurst mit Brötchen", price: 5},
-	{name: "Vegange Wurst mit Brötchen", price: 3.5},
-	{name: "Salat - klein", price: 2},
-	{name: "Salat - groß ", price: 4},
-	{name: "Pommes Frites", price: 3.5},
-	{name: "Torte - Stück", price: 2},
-	{name: "Kuchen - Stück", price: 1.5},
-	{name: "Kaffee - Tasse", price: 1}
+        {name: "Pommes", price: 3},
+        {name: "Bratwurst", price: 4},
+        {name: "Spießbraten", price: 6},
+        {name: "Magnum Classic", price: 2.5}
     ],
-    eis: [
-        {name: "Cornetto Eis", price: 2},
-        {name: "Magnum Eis", price: 3},
-        {name: "Capri Eis", price: 1.5},
-	{name: "Mini Milk Eis", price: 1},
-        {name: "Happen Eis", price: 2}
+    salatbar: [
+        {name: "Vanille Eis", price: 2},
+        {name: "Schoko Eis", price: 2},
+        {name: "Erdbeer Eis", price: 2},
+        {name: "Stracciatella", price: 2}
     ]
 };
 
 function toggleStationMode() {
     stationMode = !stationMode;
     const btn = document.getElementById("stationBtn");
+    const tiles = document.getElementById("categoryTiles");
+
     btn.innerText = stationMode ? "Stationsmodus AN" : "Stationsmodus AUS";
     btn.classList.toggle("active");
+
+    if (stationMode && activeCategory) {
+        tiles.style.display = "none";
+    } else {
+        tiles.style.display = "flex";
+    }
 }
 
 function showCategory(category) {
@@ -205,6 +224,10 @@ function showCategory(category) {
     }
 
     activeCategory = category;
+
+    if (stationMode) {
+        document.getElementById("categoryTiles").style.display = "none";
+    }
 
     document.querySelectorAll('.products').forEach(el => el.style.display = 'none');
 
@@ -276,12 +299,17 @@ function checkout() {
 
     order = {};
     total = 0;
-    activeCategory = null;
 
     document.getElementById("total").innerText = "0.00";
     document.getElementById("orderList").innerHTML = "";
 
-    document.querySelectorAll('.products').forEach(el => el.style.display = 'none');
+    // Kategorie nur schließen wenn Stationsmodus AUS
+    if (!stationMode) {
+        activeCategory = null;
+        document.querySelectorAll('.products').forEach(el => el.style.display = 'none');
+    } else {
+        showCategory(activeCategory);
+    }
 }
 
 </script>
